@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 use std::fs;
 use std::path::PathBuf;
 
@@ -28,6 +28,15 @@ impl Memory {
         }
         current.push_str(content);
         Self::save(&current)
+    }
+
+    pub fn edit() -> Result<()> {
+        let path = Self::memory_path()?;
+        if (!path.exists()) {
+            Self::save("")?;
+        }
+        open::that(path).context("Failed to open memory file in editor")?;
+        Ok(())
     }
 
     fn memory_path() -> Result<PathBuf> {

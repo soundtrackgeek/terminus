@@ -42,6 +42,10 @@ struct Args {
     /// Toggle memory usage
     #[arg(long)]
     toggle_memory: bool,
+
+    /// Edit memory file in default text editor
+    #[arg(long)]
+    edit_memory: bool,
 }
 
 const AVAILABLE_MODELS: &[&str] = &["gpt-4o", "chatgpt-4o-latest", "gpt-4o-mini"];
@@ -110,6 +114,11 @@ async fn main() -> Result<()> {
                 "disabled"
             }
         );
+        return Ok(());
+    }
+
+    if args.edit_memory {
+        Memory::edit()?;
         return Ok(());
     }
 
