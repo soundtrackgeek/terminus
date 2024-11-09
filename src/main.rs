@@ -6,6 +6,7 @@ use std::io::{stdin, stdout, Write}; // Removed 'self'
 
 mod boot;
 mod llm;
+mod matrix;
 mod memory;
 mod settings;
 mod systemmessage;

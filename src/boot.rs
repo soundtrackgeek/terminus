@@ -1,11 +1,15 @@
 use chrono::Local;
 use crossterm::{
-    cursor::MoveTo,
+    cursor::{Hide, MoveTo, Show},
     execute,
-    terminal::{Clear, ClearType},
+    style::{Color, SetBackgroundColor, SetForegroundColor},
+    terminal::{Clear, ClearType, SetTitle},
+    ExecutableCommand,
 };
 use std::io::{self, stdout, Write};
 use std::{thread, time::Duration};
+
+use crate::matrix::MatrixRain;
 
 const LOGO: &str = r#"
 ╔══════════════════════════════════════════════════════════════════════╗
@@ -33,7 +37,18 @@ fn type_effect(text: &str, delay: u64) {
 }
 
 pub fn boot_sequence() {
-    clear_screen().unwrap();
+    let mut stdout = stdout();
+    stdout.execute(SetTitle("TERMINUS")).unwrap();
+    stdout.execute(SetBackgroundColor(Color::Black)).unwrap();
+    stdout.execute(SetForegroundColor(Color::Green)).unwrap();
+    stdout.execute(Clear(ClearType::All)).unwrap();
+    stdout.execute(Hide).unwrap();
+
+    // Start Matrix animation
+    let (width, height) = crossterm::terminal::size().unwrap();
+    let mut matrix = MatrixRain::new(width, height);
+    matrix.start();
+
     println!("{}", LOGO);
     thread::sleep(Duration::from_secs(1));
 
@@ -54,9 +69,25 @@ pub fn boot_sequence() {
         type_effect(msg, 30);
         thread::sleep(Duration::from_millis(500));
     }
+
+    // Stop Matrix animation and show cursor
+    matrix.stop();
+    stdout.execute(Show).unwrap();
+
+    // Make cursor blink
+    stdout
+        .execute(MoveTo(0, height - 1))
+        .unwrap()
+        .execute(SetForegroundColor(Color::Green))
+        .unwrap();
+    print!("▋");
+    stdout.flush().unwrap();
 }
 
 pub fn show_menu() -> io::Result<String> {
+    let mut stdout = stdout();
+    stdout.execute(SetForegroundColor(Color::Green)).unwrap();
+
     println!("\nTERMINUS COMMAND INTERFACE");
     println!("------------------------");
     println!("1. Enter prompt");
