@@ -14,6 +14,6 @@ dotenv = "0.15"
 async-trait = "0.1"
 dirs = "5.0"
 open = "4.1"
-crossterm = { version = "0.26", features = ["event"] }
+crossterm = { version = "0.26", features = ["terminal", "cursor", "style"] }
 rand = "0.8"
 chrono = "0.4"
