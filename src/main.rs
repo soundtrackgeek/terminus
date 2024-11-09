@@ -116,8 +116,13 @@ async fn main() -> Result<()> {
     if let Some(prompt) = args.prompt {
         let client = llm::OpenAIClient::new(&api_key, &settings.model);
         let system_message = SystemMessage::load()?;
+        let memory_content = if settings.use_memory {
+            Memory::load()?
+        } else {
+            String::new()
+        };
         let memory = if settings.use_memory {
-            Some(Memory::load()?.as_str())
+            Some(memory_content.as_str())
         } else {
             None
         };
