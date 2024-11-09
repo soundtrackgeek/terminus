@@ -1,11 +1,5 @@
 use anyhow::Result;
-use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
-
-#[async_trait]
-pub trait LLMClient {
-    async fn complete(&self, prompt: &str) -> Result<String>;
-}
 
 #[derive(Serialize)]
 struct ChatCompletionRequest {
@@ -80,12 +74,5 @@ impl OpenAIClient {
             .await?;
 
         Ok(response.choices[0].message.content.clone())
-    }
-}
-
-#[async_trait]
-impl LLMClient for OpenAIClient {
-    async fn complete(&self, prompt: &str) -> Result<String> {
-        self.complete_with_system(prompt, "").await
     }
 }

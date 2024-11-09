@@ -7,7 +7,6 @@ mod llm;
 mod settings;
 mod systemmessage;
 
-use crate::llm::LLMClient;
 use crate::settings::Settings;
 use crate::systemmessage::SystemMessage;
 
