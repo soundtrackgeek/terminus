@@ -1,10 +1,10 @@
 use anyhow::Result;
 use clap::Parser;
 use dotenv::dotenv;
-use serde::{Deserialize, Serialize};
 use std::env;
 
 mod llm;
+use crate::llm::LLMClient;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
