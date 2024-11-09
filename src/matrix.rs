@@ -67,6 +67,7 @@ impl MatrixRain {
 
     fn draw_frame(stdout: &mut std::io::Stdout, drops: &mut Vec<Drop>, width: u16, height: u16) {
         let mut rng = rand::thread_rng();
+        let matrix_chars: Vec<char> = MATRIX_CHARS.chars().collect();
 
         for drop in drops.iter_mut() {
             // Clear previous position with dark green
@@ -85,13 +86,8 @@ impl MatrixRain {
             if drop.y >= 0 && drop.y < height as i16 {
                 stdout.execute(MoveTo(drop.x, drop.y as u16)).unwrap();
                 stdout.execute(SetForegroundColor(Color::Green)).unwrap();
-                print!(
-                    "{}",
-                    MATRIX_CHARS
-                        .chars()
-                        .nth(rng.gen_range(0..MATRIX_CHARS.len()))
-                        .unwrap()
-                );
+                let char_idx = rng.gen_range(0..matrix_chars.len());
+                print!("{}", matrix_chars[char_idx]);
             }
 
             // Reset if off screen
