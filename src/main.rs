@@ -5,9 +5,11 @@ use std::env;
 
 mod llm;
 mod settings;
+mod systemmessage;
 
 use crate::llm::LLMClient;
 use crate::settings::Settings;
+use crate::systemmessage::SystemMessage;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -19,6 +21,14 @@ struct Args {
     /// Select model to use
     #[arg(short, long)]
     select_model: bool,
+
+    /// Set system message
+    #[arg(long)]
+    set_system: Option<String>,
+
+    /// Show current system message
+    #[arg(long)]
+    show_system: bool,
 }
 
 const AVAILABLE_MODELS: &[&str] = &["gpt-4o", "chatgpt-4o-latest", "gpt-4o-mini"];
@@ -29,6 +39,18 @@ async fn main() -> Result<()> {
     let api_key = env::var("OPENAI_API_KEY").expect("OPENAI_API_KEY must be set");
     let args = Args::parse();
     let mut settings = Settings::load()?;
+
+    if let Some(message) = args.set_system {
+        SystemMessage::save(&message)?;
+        println!("System message updated successfully");
+        return Ok(());
+    }
+
+    if args.show_system {
+        let message = SystemMessage::load()?;
+        println!("Current system message:\n{}", message);
+        return Ok(());
+    }
 
     if args.select_model {
         println!("Available models:");
@@ -54,7 +76,10 @@ async fn main() -> Result<()> {
 
     if let Some(prompt) = args.prompt {
         let client = llm::OpenAIClient::new(&api_key, &settings.model);
-        let response = client.complete(&prompt).await?;
+        let system_message = SystemMessage::load()?;
+        let response = client
+            .complete_with_system(&prompt, &system_message)
+            .await?;
         println!("Response: {}", response);
     } else {
         println!("Please provide a prompt with --prompt or select a model with --select-model");
