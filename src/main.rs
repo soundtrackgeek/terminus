@@ -2,7 +2,7 @@ use anyhow::Result;
 use clap::Parser;
 use dotenv::dotenv;
 use std::env;
-use std::io::{self, stdin, stdout, Write}; // Add Write trait here
+use std::io::{stdin, stdout, Write}; // Removed 'self'
 
 mod boot;
 mod llm;
