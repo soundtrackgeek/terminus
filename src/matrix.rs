@@ -16,6 +16,7 @@ pub struct MatrixRain {
     height: u16,
     drops: Arc<parking_lot::Mutex<Vec<Drop>>>,
     running: Arc<AtomicBool>,
+    protected_areas: Arc<parking_lot::Mutex<Vec<(u16, u16, u16, u16)>>>, // (x1, y1, x2, y2)
 }
 
 struct Drop {
@@ -44,35 +45,43 @@ impl MatrixRain {
             height,
             drops: Arc::new(parking_lot::Mutex::new(drops)),
             running: Arc::new(AtomicBool::new(true)),
+            protected_areas: Arc::new(parking_lot::Mutex::new(Vec::new())),
         }
     }
 
-    pub fn start(&self) {
-        let running = self.running.clone();
-        let drops = self.drops.clone();
-        let width = self.width;
-        let height = self.height;
-
-        std::thread::spawn(move || {
-            while running.load(Ordering::Relaxed) {
-                Self::draw_frame(&mut stdout(), &mut drops.lock(), width, height);
-                std::thread::sleep(Duration::from_millis(50));
-            }
-        });
+    pub fn protect_area(&self, x1: u16, y1: u16, x2: u16, y2: u16) {
+        self.protected_areas.lock().push((x1, y1, x2, y2));
     }
 
-    pub fn stop(&self) {
-        self.running.store(false, Ordering::Relaxed);
+    fn is_position_protected(x: u16, y: u16, protected_areas: &[(u16, u16, u16, u16)]) -> bool {
+        protected_areas
+            .iter()
+            .any(|(x1, y1, x2, y2)| x >= *x1 && x <= *x2 && y >= *y1 && y <= *y2)
     }
 
-    fn draw_frame(stdout: &mut std::io::Stdout, drops: &mut Vec<Drop>, width: u16, height: u16) {
+    fn draw_frame(
+        stdout: &mut std::io::Stdout,
+        drops: &mut Vec<Drop>,
+        width: u16,
+        height: u16,
+        protected_areas: &[(u16, u16, u16, u16)],
+    ) {
         let mut rng = rand::thread_rng();
         let matrix_chars: Vec<char> = MATRIX_CHARS.chars().collect();
 
         for drop in drops.iter_mut() {
-            // Clear previous position with dark green
-            if drop.y >= 0 {
-                stdout.execute(MoveTo(drop.x, drop.y as u16)).unwrap();
+            let x = drop.x;
+            let y = drop.y;
+
+            // Skip drawing if position is protected
+            if y >= 0 && Self::is_position_protected(x, y as u16, protected_areas) {
+                drop.y += drop.speed as i16;
+                continue;
+            }
+
+            // Clear previous position
+            if y >= 0 && !Self::is_position_protected(x, y as u16, protected_areas) {
+                stdout.execute(MoveTo(x, y as u16)).unwrap();
                 stdout
                     .execute(SetForegroundColor(Color::DarkGreen))
                     .unwrap();
@@ -82,9 +91,12 @@ impl MatrixRain {
             // Update position
             drop.y += drop.speed as i16;
 
-            // Draw new position with bright green
-            if drop.y >= 0 && drop.y < height as i16 {
-                stdout.execute(MoveTo(drop.x, drop.y as u16)).unwrap();
+            // Draw new position
+            if y >= 0
+                && y < height as i16
+                && !Self::is_position_protected(x, y as u16, protected_areas)
+            {
+                stdout.execute(MoveTo(x, y as u16)).unwrap();
                 stdout.execute(SetForegroundColor(Color::Green)).unwrap();
                 let char_idx = rng.gen_range(0..matrix_chars.len());
                 print!("{}", matrix_chars[char_idx]);
@@ -97,5 +109,30 @@ impl MatrixRain {
             }
         }
         stdout.flush().unwrap();
+    }
+
+    pub fn start(&self) {
+        let running = self.running.clone();
+        let drops = self.drops.clone();
+        let protected_areas = self.protected_areas.clone();
+        let width = self.width;
+        let height = self.height;
+
+        std::thread::spawn(move || {
+            while running.load(Ordering::Relaxed) {
+                Self::draw_frame(
+                    &mut stdout(),
+                    &mut drops.lock(),
+                    width,
+                    height,
+                    &protected_areas.lock(),
+                );
+                std::thread::sleep(Duration::from_millis(50));
+            }
+        });
+    }
+
+    pub fn stop(&self) {
+        self.running.store(false, Ordering::Relaxed);
     }
 }

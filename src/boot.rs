@@ -42,6 +42,13 @@ pub fn boot_sequence() {
     // Start Matrix animation
     let (width, height) = crossterm::terminal::size().unwrap();
     let matrix = MatrixRain::new(width, height);
+
+    // Protect the logo area (assuming logo starts at y=1 and is 10 lines tall)
+    matrix.protect_area(0, 1, width - 1, 11);
+
+    // Protect the bottom area for messages (from y=12 to y=25)
+    matrix.protect_area(0, 12, width - 1, 25);
+
     matrix.start();
 
     println!("{}", LOGO);
