@@ -39,20 +39,21 @@ pub fn boot_sequence() {
     stdout.execute(Clear(ClearType::All)).unwrap();
     stdout.execute(Hide).unwrap();
 
-    // Start Matrix animation
+    // Start Matrix animation only in the top portion
     let (width, height) = crossterm::terminal::size().unwrap();
-    let matrix = MatrixRain::new(width, height);
+    let matrix = MatrixRain::new(width, 12); // Limit matrix height to just the logo area
 
-    // Protect the logo area (assuming logo starts at y=1 and is 10 lines tall)
-    matrix.protect_area(0, 1, width - 1, 11);
-
-    // Protect the bottom area for messages (from y=12 to y=25)
-    matrix.protect_area(0, 12, width - 1, 25);
+    // Only protect the active message area (from y=12 downwards)
+    matrix.protect_area(0, 12, width - 1, height);
 
     matrix.start();
 
+    // Position the logo at the top
     println!("{}", LOGO);
     thread::sleep(Duration::from_secs(1));
+
+    // Position cursor below the logo for messages
+    stdout.execute(MoveTo(0, 12)).unwrap();
 
     let messages = [
         "INITIALIZING TERMINUS CORE SYSTEMS...",
