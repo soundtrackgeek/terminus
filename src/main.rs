@@ -14,7 +14,7 @@ struct Args {
     prompt: String,
 
     /// Which LLM to use (default: gpt-3.5-turbo)
-    #[arg(short, long, default_value = "gpt-3.5-turbo")]
+    #[arg(short, long, default_value = "gpt-4o-mini")]
     model: String,
 }
 
