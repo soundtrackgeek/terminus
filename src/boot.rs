@@ -1,14 +1,11 @@
 use chrono::Local;
 use crossterm::{
-    cursor::{Hide, MoveTo, Show},
-    style::{Color, SetBackgroundColor, SetForegroundColor},
-    terminal::{Clear, ClearType, SetTitle},
-    ExecutableCommand,
+    cursor::MoveTo,
+    execute,
+    terminal::{Clear, ClearType},
 };
 use std::io::{self, stdout, Write};
 use std::{thread, time::Duration};
-
-use crate::matrix::MatrixRain;
 
 const LOGO: &str = r#"
 ╔══════════════════════════════════════════════════════════════════════╗
@@ -32,23 +29,7 @@ fn type_effect(text: &str, delay: u64) {
 }
 
 pub fn boot_sequence() {
-    let mut stdout = stdout();
-    stdout.execute(SetTitle("TERMINUS")).unwrap();
-    stdout.execute(SetBackgroundColor(Color::Black)).unwrap();
-    stdout.execute(SetForegroundColor(Color::Green)).unwrap();
-    stdout.execute(Clear(ClearType::All)).unwrap();
-    stdout.execute(Hide).unwrap();
-
-    // Start Matrix animation only in the top portion
-    let (width, height) = crossterm::terminal::size().unwrap();
-    let matrix = MatrixRain::new(width, 12); // Limit matrix height to just the logo area
-
-    // Only protect the active message area (from y=12 downwards)
-    matrix.protect_area(0, 12, width - 1, height);
-
-    matrix.start();
-
-    // Position the logo at the top
+    clear_screen().unwrap();
     println!("{}", LOGO);
     thread::sleep(Duration::from_secs(1));
 
@@ -72,25 +53,9 @@ pub fn boot_sequence() {
         type_effect(msg, 30);
         thread::sleep(Duration::from_millis(500));
     }
-
-    // Stop Matrix animation and show cursor
-    matrix.stop();
-    stdout.execute(Show).unwrap();
-
-    // Make cursor blink
-    stdout
-        .execute(MoveTo(0, height - 1))
-        .unwrap()
-        .execute(SetForegroundColor(Color::Green))
-        .unwrap();
-    print!("▋");
-    stdout.flush().unwrap();
 }
 
 pub fn show_menu() -> io::Result<String> {
-    let mut stdout = stdout();
-    stdout.execute(SetForegroundColor(Color::Green)).unwrap();
-
     println!("\nTERMINUS COMMAND INTERFACE");
     println!("------------------------");
     println!("1. Enter prompt");

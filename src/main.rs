@@ -6,7 +6,6 @@ use std::io::{self, stdin, stdout, Write}; // Add Write trait here
 
 mod boot;
 mod llm;
-mod matrix;
 mod memory;
 mod settings;
 mod systemmessage;
