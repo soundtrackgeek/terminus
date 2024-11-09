@@ -32,7 +32,7 @@ impl Memory {
 
     pub fn edit() -> Result<()> {
         let path = Self::memory_path()?;
-        if (!path.exists()) {
+        if !path.exists() {
             Self::save("")?;
         }
         open::that(path).context("Failed to open memory file in editor")?;
