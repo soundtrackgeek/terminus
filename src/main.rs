@@ -2,6 +2,7 @@ use anyhow::Result;
 use clap::Parser;
 use dotenv::dotenv;
 use std::env;
+use std::io::{self, stdin, stdout, Write}; // Add Write trait here
 
 mod boot;
 mod llm;
@@ -55,9 +56,9 @@ async fn handle_menu_choice(choice: &str, settings: &mut Settings) -> Result<boo
     match choice {
         "1" => {
             print!("Enter your prompt: ");
-            std::io::stdout().flush()?;
+            stdout().flush()?;
             let mut prompt = String::new();
-            std::io::stdin().read_line(&mut prompt)?;
+            stdin().read_line(&mut prompt)?;
 
             let api_key = std::env::var("OPENAI_API_KEY").expect("OPENAI_API_KEY must be set");
             let client = llm::OpenAIClient::new(&api_key, &settings.model);
@@ -98,9 +99,9 @@ async fn handle_menu_choice(choice: &str, settings: &mut Settings) -> Result<boo
         }
         "3" => {
             print!("Enter new system message: ");
-            std::io::stdout().flush()?;
+            stdout().flush()?;
             let mut message = String::new();
-            std::io::stdin().read_line(&mut message)?;
+            stdin().read_line(&mut message)?;
             SystemMessage::save(&message)?;
             println!("System message updated successfully");
         }
@@ -110,9 +111,9 @@ async fn handle_menu_choice(choice: &str, settings: &mut Settings) -> Result<boo
         }
         "5" => {
             print!("Enter memory entry: ");
-            std::io::stdout().flush()?;
+            stdout().flush()?;
             let mut entry = String::new();
-            std::io::stdin().read_line(&mut entry)?;
+            stdin().read_line(&mut entry)?;
             Memory::append(&entry)?;
             println!("Memory entry added successfully");
         }
