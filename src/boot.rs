@@ -1,7 +1,6 @@
 use chrono::Local;
 use crossterm::{
     cursor::{Hide, MoveTo, Show},
-    execute,
     style::{Color, SetBackgroundColor, SetForegroundColor},
     terminal::{Clear, ClearType, SetTitle},
     ExecutableCommand,
