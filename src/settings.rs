@@ -6,12 +6,14 @@ use std::path::PathBuf;
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Settings {
     pub model: String,
+    pub use_memory: bool,
 }
 
 impl Default for Settings {
     fn default() -> Self {
         Self {
             model: "gpt-4o-mini".to_string(),
+            use_memory: true,
         }
     }
 }

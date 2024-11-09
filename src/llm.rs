@@ -43,7 +43,12 @@ impl OpenAIClient {
         }
     }
 
-    pub async fn complete_with_system(&self, prompt: &str, system_message: &str) -> Result<String> {
+    pub async fn complete_with_system(
+        &self,
+        prompt: &str,
+        system_message: &str,
+        memory: Option<&str>,
+    ) -> Result<String> {
         let mut messages = Vec::new();
 
         if !system_message.is_empty() {
@@ -51,6 +56,18 @@ impl OpenAIClient {
                 role: "system".to_string(),
                 content: system_message.to_string(),
             });
+        }
+
+        if let Some(memory_content) = memory {
+            if !memory_content.is_empty() {
+                messages.push(Message {
+                    role: "system".to_string(),
+                    content: format!(
+                        "Consider this personal context when responding:\n{}",
+                        memory_content
+                    ),
+                });
+            }
         }
 
         messages.push(Message {

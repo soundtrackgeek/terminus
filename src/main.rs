@@ -4,9 +4,11 @@ use dotenv::dotenv;
 use std::env;
 
 mod llm;
+mod memory;
 mod settings;
 mod systemmessage;
 
+use crate::memory::Memory;
 use crate::settings::Settings;
 use crate::systemmessage::SystemMessage;
 
@@ -28,6 +30,18 @@ struct Args {
     /// Show current system message
     #[arg(long)]
     show_system: bool,
+
+    /// Add new memory entry
+    #[arg(long)]
+    add_memory: Option<String>,
+
+    /// Show current memory
+    #[arg(long)]
+    show_memory: bool,
+
+    /// Toggle memory usage
+    #[arg(long)]
+    toggle_memory: bool,
 }
 
 const AVAILABLE_MODELS: &[&str] = &["gpt-4o", "chatgpt-4o-latest", "gpt-4o-mini"];
@@ -73,11 +87,42 @@ async fn main() -> Result<()> {
         }
     }
 
+    if args.show_memory {
+        let memory = Memory::load()?;
+        println!("Current memory:\n{}", memory);
+        return Ok(());
+    }
+
+    if let Some(memory_entry) = args.add_memory {
+        Memory::append(&memory_entry)?;
+        println!("Memory entry added successfully");
+        return Ok(());
+    }
+
+    if args.toggle_memory {
+        settings.use_memory = !settings.use_memory;
+        settings.save()?;
+        println!(
+            "Memory usage: {}",
+            if settings.use_memory {
+                "enabled"
+            } else {
+                "disabled"
+            }
+        );
+        return Ok(());
+    }
+
     if let Some(prompt) = args.prompt {
         let client = llm::OpenAIClient::new(&api_key, &settings.model);
         let system_message = SystemMessage::load()?;
+        let memory = if settings.use_memory {
+            Some(Memory::load()?.as_str())
+        } else {
+            None
+        };
         let response = client
-            .complete_with_system(&prompt, &system_message)
+            .complete_with_system(&prompt, &system_message, memory)
             .await?;
         println!("Response: {}", response);
     } else {
