@@ -1,7 +1,6 @@
 use crossterm::{
-    cursor::{Hide, MoveTo, Show},
-    style::{Color, SetBackgroundColor, SetForegroundColor},
-    terminal::{Clear, ClearType},
+    cursor::MoveTo,
+    style::{Color, SetForegroundColor},
     ExecutableCommand,
 };
 use rand::Rng;
@@ -11,18 +10,17 @@ use std::sync::Arc;
 use std::time::Duration;
 
 const MATRIX_CHARS: &str = "ﾊﾐﾋｰｳｼﾅﾓﾆｻﾜﾂｵﾘｱﾎﾃﾏｹﾒｴｶｷﾑﾕﾗｾﾈｽﾀﾇﾍ";
-const TRANSPARENCY: f32 = 0.2;
 
 pub struct MatrixRain {
     width: u16,
     height: u16,
-    drops: Vec<Drop>,
+    drops: Arc<parking_lot::Mutex<Vec<Drop>>>,
     running: Arc<AtomicBool>,
 }
 
 struct Drop {
     x: u16,
-    y: i16,
+    y: i16, // Changed to i16 to allow negative values
     speed: u16,
     length: u16,
 }
@@ -35,7 +33,7 @@ impl MatrixRain {
         for _ in 0..width / 3 {
             drops.push(Drop {
                 x: rng.gen_range(0..width),
-                y: rng.gen_range(-20..0),
+                y: -(rng.gen_range(5..20) as i16), // Negative starting position
                 speed: rng.gen_range(1..4),
                 length: rng.gen_range(5..20),
             });
@@ -44,16 +42,20 @@ impl MatrixRain {
         Self {
             width,
             height,
-            drops,
+            drops: Arc::new(parking_lot::Mutex::new(drops)),
             running: Arc::new(AtomicBool::new(true)),
         }
     }
 
-    pub fn start(&mut self) {
+    pub fn start(&self) {
         let running = self.running.clone();
+        let drops = self.drops.clone();
+        let width = self.width;
+        let height = self.height;
+
         std::thread::spawn(move || {
             while running.load(Ordering::Relaxed) {
-                Self::draw_frame(&mut stdout(), &mut self.drops, self.width, self.height);
+                Self::draw_frame(&mut stdout(), &mut drops.lock(), width, height);
                 std::thread::sleep(Duration::from_millis(50));
             }
         });
@@ -93,8 +95,8 @@ impl MatrixRain {
             }
 
             // Reset if off screen
-            if drop.y > height as i16 {
-                drop.y = -drop.length as i16;
+            if drop.y >= height as i16 {
+                drop.y = -(drop.length as i16);
                 drop.x = rng.gen_range(0..width);
             }
         }
