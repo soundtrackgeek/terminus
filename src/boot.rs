@@ -23,10 +23,6 @@ const LOGO: &str = r#"
 ║                  ADVANCED AI INTERFACE SYSTEM v2.1                   ║
 ╚══════════════════════════════════════════════════════════════════════╝"#;
 
-pub fn clear_screen() -> io::Result<()> {
-    execute!(stdout(), Clear(ClearType::All), MoveTo(0, 0))
-}
-
 fn type_effect(text: &str, delay: u64) {
     for c in text.chars() {
         print!("{}", c);
@@ -46,7 +42,7 @@ pub fn boot_sequence() {
 
     // Start Matrix animation
     let (width, height) = crossterm::terminal::size().unwrap();
-    let mut matrix = MatrixRain::new(width, height);
+    let matrix = MatrixRain::new(width, height);
     matrix.start();
 
     println!("{}", LOGO);
