@@ -36,13 +36,15 @@ struct ResponseMessage {
 
 pub struct OpenAIClient {
     api_key: String,
+    model: String,
     client: reqwest::Client,
 }
 
 impl OpenAIClient {
-    pub fn new(api_key: &str) -> Self {
+    pub fn new(api_key: &str, model: &str) -> Self {
         Self {
             api_key: api_key.to_string(),
+            model: model.to_string(),
             client: reqwest::Client::new(),
         }
     }
@@ -52,7 +54,7 @@ impl OpenAIClient {
 impl LLMClient for OpenAIClient {
     async fn complete(&self, prompt: &str) -> Result<String> {
         let request = ChatCompletionRequest {
-            model: "gpt-3.5-turbo".to_string(),
+            model: self.model.clone(),
             messages: vec![Message {
                 role: "user".to_string(),
                 content: prompt.to_string(),
